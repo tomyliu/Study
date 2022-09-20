@@ -1,0 +1,21 @@
+﻿<?xml version='1.0' encoding='utf-8'?>
+<SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="ActiveMQMonitor.Properties" GeneratedClassName="Settings">
+  <Profiles />
+  <Settings>
+    <Setting Name="ActiveMQIP" Type="System.String" Scope="User">
+      <Value Profile="(Default)">10.48.167.52</Value>
+    </Setting>
+    <Setting Name="AdminPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">8161</Value>
+    </Setting>
+    <Setting Name="UserID" Type="System.String" Scope="User">
+      <Value Profile="(Default)">admin</Value>
+    </Setting>
+    <Setting Name="Password" Type="System.String" Scope="User">
+      <Value Profile="(Default)">admin</Value>
+    </Setting>
+    <Setting Name="MQPort" Type="System.Int32" Scope="User">
+      <Value Profile="(Default)">61616</Value>
+    </Setting>
+  </Settings>
+</SettingsFile>
