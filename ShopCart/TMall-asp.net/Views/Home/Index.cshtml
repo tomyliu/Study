@@ -16,30 +16,30 @@
                     <h3>
                         <a href="/Item/List?category_id=@c.ItemCategoryId" target="_blank">
                             @c.ItemCategoryName
-                        <span class="pull-right">more <i class="fa fa-angle-double-right"></i></span>
-                    </a>
-                </h3>
-                <hr />
-            </div>
-            @foreach (var item in items)
-            {
-                <div class="col-md-3 col-sm-3 col-lg-3" style="padding: 0;font-size: larger; color: black">
-                    <div class="line text-center" style="background-color: white; margin: 5px">
-                        <a href="/Item/Detail?item_id=@item.ItemId" target="_blank">
-                            <img src="@item.ItemPicture" class="img-responsive" />
-                            <span style="color: black">@item.ItemName</span>
+                            <span class="pull-right">more <i class="fa fa-angle-double-right"></i></span>
                         </a>
-                        <br /><span style="color: red;font-size: xx-large">¥ @item.ItemPrice</span>
-                        <br /><span>銷量: @item.ItemSales</span>  <span>庫存: @item.ItemNumber</span>
-                    </div>
+                    </h3>
+                    <hr />
                 </div>
-            }
-        </div>
+                @foreach (var item in items)
+                {
+                    <div class="col-md-3 col-sm-3 col-lg-3" style="padding: 0;font-size: larger; color: black">
+                        <div class="line text-center" style="background-color: white; margin: 5px">
+                            <a href="/Item/Detail?item_id=@item.ItemId" target="_blank">
+                                <img src="@item.ItemPicture" class="img-responsive" />
+                                <span style="color: black">@item.ItemName</span>
+                            </a>
+                            <br /><span style="color: red;font-size: xx-large">NT$ @item.ItemPrice</span>
+                            <br /><span>銷量: @item.ItemSales</span>  <span>庫存: @item.ItemNumber</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
     }
-}
 }
 else
 {
-<h2 class="text-center text-danger">No Item Category</h2>
+    <h2 class="text-center text-danger">No Item Category</h2>
 }
 
