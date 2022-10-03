@@ -1,0 +1,129 @@
+﻿@{
+    ViewBag.Title = "編輯商品資訊";
+}
+
+@model TMall.Models.ItemModel
+
+<h2 class="text-center" style="margin-bottom: 15px;">商品編輯</h2>
+
+<div class="row" id="editAPP">
+    <div class="col-md-6">
+        @using (Html.BeginForm("Edit", "Item", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+        {
+            <div class="form-group" style="display: none">
+                @Html.LabelFor(m => m.ItemId, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemId, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemId)
+                </div>
+            </div>
+            <div class="form-group" style="display: none">
+                @Html.LabelFor(m => m.ItemCategoryId, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemCategoryId, new { @class = "form-control", value = "{{nameToId}}" })
+                    @Html.ValidationMessageFor(m => m.ItemCategoryId)
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="ItemCategoryName" class="col-sm-2 control-label">商品分類</label>
+                <div class="col-sm-10">
+                    <select id="ItemCategoryName" class="form-control" v-model="nameToId">
+                        @foreach (var c in TMall.Respository.Item.GetItemCategories())
+                        {
+                            <option value="@c.ItemCategoryId">@c.ItemCategoryName</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemName, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemName, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemName)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemNumber, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemNumber, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemNumber)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemPrice, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemPrice, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemPrice)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemSales, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemSales, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemSales)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemPicture, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextBoxFor(m => m.ItemPicture, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemPicture)
+                </div>
+            </div>
+            <div class="form-group">
+                @Html.LabelFor(m => m.ItemKeyword, new { @class = "col-sm-2 control-label" })
+                <div class="col-sm-10">
+                    @Html.TextAreaFor(m => m.ItemKeyword, new { @class = "form-control" })
+                    @Html.ValidationMessageFor(m => m.ItemKeyword)
+                </div>
+            </div>
+            <div class="form-group">
+                @{
+                    Dictionary<string, object> attr = new Dictionary<string, object>();
+                    attr.Add("v-model", "inText");<!-- 綁定到vue-->
+                    attr.Add("class", "form-control");
+                }
+                @Html.LabelFor(m => m.ItemText, new { @class = "control-label" })
+                @Html.TextAreaFor(m => m.ItemText, 20, 50, attr)
+                @Html.ValidationMessageFor(m => m.ItemText)
+            </div>
+            <div class="form-group">
+                <div class="col-md-10 col-sm-10 col-md-offset-1 col-sm-offset-1">
+                    <input type="submit" value="提交" class="btn btn-success btn-block" />
+                </div>
+            </div>
+        }
+    </div>
+    <div class="col-md-6">
+        <h4>具體參數預覽:</h4>
+        <div v-html="markedText" style="background-color:ghostwhite">
+            <!-- 即時預覽 -->
+        </div>
+    </div>
+
+</div>
+
+<script>
+    var editAPP = new Vue({
+        el: "#editAPP",
+        data: {
+            nameToId: null,
+            markedText: null,
+            inText: $("#ItemText").val(),//首先通過表單已經有的值初始化
+        },
+        mounted: function () { // 實例掛載後執行
+            let v = $("#ItemCategoryId").val();
+            if (v != null || v != undefined) this.nameToId = v;// 自動填入原先的分類
+            if (this.inText !== null) this.markedText = marked(this.inText); // 如果inText已經初始化, 那麼對應的輸出就初始化
+            let id = $("#ItemId").val();
+            if (id == undefined || id == null || id == "") $("#ItemId").val(-1);// 如果未定義, 那就是新建商品, 就把id設為-1即可
+        },
+    });
+    editAPP.$watch('nameToId', function (nval, oval) {// 監聽商品名稱的變化
+        $("#ItemCategoryId").val(nval);// 名稱變對應的id就變, 達到了直接輸入的效果
+    });
+    editAPP.$watch('inText', function (nval, oval) {// 監聽詳細參數的輸入框
+        editAPP.markedText = marked(nval);
+    });
+
+</script>

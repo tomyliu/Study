@@ -1,0 +1,601 @@
+﻿@{
+    ViewBag.Title = Session["username"] + " 個人中心";
+}
+
+
+@model TMall.Models.UserProfileModel
+
+
+<div class="row">
+    <div id="cartAPP" class="col-md-12 col-sm-12 col-lg-12">
+        <div class="row" data-toggle="collapse" data-target="#cartList" style="background-color: snow">
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6"><h2>購物車</h2></div>
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6 text-right">
+                <h2><a href="javascript:void(0);"><i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h2>
+            </div>
+        </div>
+        <hr />
+        <!-- 上面的div是折疊塊的打開關閉介面, 下面的div是折疊塊(默認折疊)-->
+        <div id="cartList" class="collapse">
+            <ul class="list-group">
+                <li v-for="cart in carts" class="list-group-item" style="margin-bottom:10px;">
+                    <div class="row">
+                        <div class="col-sm-3 col-md-3">
+                            <a v-bind:href="cart.Href" target="_blank">
+                                <img v-bind:src="cart.ItemPicture" class="img-responsive line" alt="商品圖片" />
+                            </a>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <ul class="list-group">
+                                <li class="list-group-item">商品編號: {{cart.ItemId}}</li>
+                                <li class="list-group-item">商品名稱: {{cart.ItemName}}</li>
+                                <li class="list-group-item">商品價格: {{cart.ItemPrice}}</li>
+                                <li class="list-group-item">商品銷量: {{cart.ItemSales}}</li>
+                                <li class="list-group-item">商品庫存: {{cart.ItemNumber}}</li>
+                                <li class="list-group-item">加入購物車數量: {{cart.CartItemNumber}}</li>
+                                <li class="list-group-item">加入購物車時間: {{cart.CartInTime}}</li>
+                            </ul>
+                        </div>
+                        <div class="col-sm-3 col-md-3">
+                            <button class="btn btn-primary" style="margin-top: 30px" v-on:click="setCart" v-bind:name="cart.ItemId">修改數量</button><br />
+                            <button class="btn btn-danger" style="margin-top: 10px" v-on:click="delCart" v-bind:name="cart.ItemId">從購物車移除</button><br />
+                            <button class="btn btn-success" style="margin-top: 10px" onclick="buy(this);" v-bind:name="cart.ItemId">立即購買</button><br />
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="orderAPP" class="col-md-12 col-sm-12 col-lg-12">
+        <div class="row" data-toggle="collapse" data-target="#orderList" style="background-color: snow">
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6"><h2>我的訂單</h2></div>
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6 text-right">
+                <h2><a href="javascript:void(0);"><i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h2>
+            </div>
+        </div>
+        <hr />
+        <!-- 上面的div是折疊塊的打開關閉介面, 下面的div是折疊塊(默認折疊)-->
+        <div id="orderList" class="collapse" style="background-color: white">
+            <table class="table table-bordered table-hover table-responsive">
+                <thead>
+                    <tr><th>訂單編號</th><th>商品編號</th><th>商品價格</th><th>商品數量</th><th>總價</th><th>狀態</th><th>創建時間</th><th>操作</th></tr>
+                </thead>
+                <tbody>
+                    <tr v-for="order in orders">
+                        <td>{{order.OrderId}}</td>
+                        <td>{{order.ItemId}}</td>
+                        <td>{{order.OrderPrice}}</td>
+                        <td>{{order.OrderNum}}</td>
+                        <td>{{order.OrderPrice * order.OrderNum}}</td>
+                        <td>{{order.OrderStatus}}</td>
+                        <td>{{order.OrderCreateTime}}</td>
+                        <td v-if="order.OrderStatus=='未支付'"><button class="btn btn-primary" v-on:click="pay" v-bind:name="order.OrderId">支付</button></td>
+                        <td v-else=""></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div id="collectAPP" class="col-md-12 col-sm-12 col-lg-12">
+        <div class="row" data-toggle="collapse" data-target="#collectList" style="background-color: snow">
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6"><h2>我的收藏</h2></div>
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6 text-right">
+                <h2><a href="javascript:void(0);"><i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h2>
+            </div>
+        </div>
+        <hr />
+        <!-- 上面的div是折疊塊的打開關閉介面, 下面的div是折疊塊(默認折疊)-->
+        <div id="collectList" class="collapse">
+            <ul class="list-group">
+                <li v-for="collect in collects" class="list-group-item">
+                    <div class="row">
+                        <div class="col-sm-3 col-md-3">
+                            <a v-bind:href="collect.Href" target="_blank">
+                                <img v-bind:src="collect.ItemPicture" class="img-responsive" alt="商品圖片" />
+                            </a>
+                        </div>
+                        <div class="col-sm-6 col-md-6">
+                            <ul class="list-group">
+                                <li class="list-group-item">商品編號: {{collect.ItemId}}</li>
+                                <li class="list-group-item">商品名稱: {{collect.ItemName}}</li>
+                                <li class="list-group-item">商品價格: {{collect.ItemPrice}}</li>
+                                <li class="list-group-item">商品銷量: {{collect.ItemSales}}</li>
+                                <li class="list-group-item">商品庫存: {{collect.ItemNumber}}</li>
+                                <li class="list-group-item">收藏時間: {{collect.CollectTime}}</li>
+                                <li class="list-group-item">
+                                    操作:
+                                    <button class="btn btn-danger" style="margin-left:20px" v-on:click="delCollect" v-bind:name="collect.ItemId">取消收藏</button>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+    </div>
+    <div id="profileAPP" class="col-md-12 col-sm-12 col-lg-12">
+        <div class="row" data-toggle="collapse" data-target="#profile" style="background-color: snow">
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6"><h2>個人資訊</h2></div>
+            <div class="col-md-6 col-sm-6 col-xs-6 col-lg-6 text-right">
+                <h2><a href="javascript:void(0);"><i class="fa fa-angle-double-right" aria-hidden="true"></i></a></h2>
+            </div>
+        </div>
+        <hr />
+        <!-- 上面的div是折疊塊的打開關閉介面, 下面的div是折疊塊(默認折疊)-->
+        <div id="profile" class="collapse">
+            @using (Html.BeginForm("Register", "Users", FormMethod.Post, new { @class = "form-horizontal", role = "form" }))
+            {
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Username, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{
+                            Dictionary<string, object> attr = new Dictionary<string, object>();
+                            attr.Add("class", "form-control");
+                            attr.Add("v-model", "Username");<!-- 綁定vue-->
+                            @Html.TextBoxFor(m => m.Username, attr);
+                        }
+                    </div>
+                </div>
+                <div class="form-group" style="display: none">
+                    <!--原先的密碼段隱藏-->
+                    @Html.LabelFor(m => m.Passwd, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Passwd"; }
+                        @Html.TextBoxFor(m => m.Passwd, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Email, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Email"; }
+                        @Html.TextBoxFor(m => m.Email, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="OldPasswd" class="control-label col-sm-2">舊密碼</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="OldPasswd" v-model="OldPasswd" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="NewPasswd" class="control-label col-sm-2">新密碼</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="NewPasswd" v-model="NewPasswd" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="NewPasswdConfirm" class="control-label col-sm-2">新密碼確認</label>
+                    <div class="col-sm-10">
+                        <input type="password" class="form-control" id="NewPasswdConfirm" v-model="NewPasswdConfirm" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Birthday, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Birthday"; }
+                        @Html.TextBoxFor(m => m.Birthday, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.QQNumber, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "QQNumber"; }
+                        @Html.TextBoxFor(m => m.QQNumber, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.PhoneNumber, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "PhoneNumber"; }
+                        @Html.TextBoxFor(m => m.PhoneNumber, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Address, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Address"; }
+                        @Html.TextBoxFor(m => m.Address, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Level, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Level"; }
+                        @Html.TextBoxFor(m => m.Level, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.RegisterTime, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "RegisterTime"; }
+
+                        @Html.TextBoxFor(m => m.RegisterTime, attr)
+                    </div>
+                </div>
+                <div class="form-group">
+                    @Html.LabelFor(m => m.Captcha, new { @class = "col-sm-2 control-label" })
+                    <div class="col-sm-10">
+                        @{ attr["v-model"] = "Captcha"; }
+                        @Html.TextBoxFor(m => m.Captcha, attr)
+                        @Html.ValidationMessageFor(m => m.Captcha)
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-md-2 col-sm-2 col-md-offset-2 col-sm-offset-2" style="padding-right: 0">
+                        <a href="javascript:void(0)" onclick="$('#captchaImg')[0].src=$('#captchaImg')[0].src+'?';">看不清楚?換一張</a>
+                    </div>
+                    <div class="col-md-3 col-sm-3" style="padding-left: 0">
+                        <img id="captchaImg" src="/Users/Captcha" class="img-responsive" alt="驗證碼" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <div class="col-sm-8 col-md-8 col-sm-offset-2 col-md-offset-2">
+                        <button type="button" v-on:click="update" class="btn btn-primary btn-block">更新資訊</button>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+<!-- 模態對話方塊 購物車數量-->
+<div class="modal fade" id="cartNumberModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">請輸入修改後的數量</h4>
+            </div>
+            <div class="modal-body">
+                <input type="number" min="1" max="100000" id="cartNumberModalInput" class="form-control" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">關閉</button>
+                <button type="button" class="btn btn-primary" id="cartNumberModalButton">提交更改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 模態對話方塊 支付頁面-->
+<div class="modal fade" id="payModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title">支付!</h4>
+            </div>
+            <div class="modal-body">
+                <img class="img-responsive" src="#" alt="這是一張收款碼!" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">關閉</button>
+                <button type="button" class="btn btn-primary" id="payModalButton">支付成功</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $(".collapse").on('show.bs.collapse', function (e) {// 監聽展開事件
+        var par = e.currentTarget.parentElement;
+        // 判斷是不是屬於這四個app
+        if (par.id === "profileAPP" || par.id === "collectAPP" || par.id === "cartAPP" || par.id === "orderAPP") {
+            let dom = par.firstElementChild.children[1].firstElementChild.firstElementChild.firstElementChild;
+            dom.className = "fa fa-angle-double-down";
+        }
+    });
+    $(".collapse").on('hide.bs.collapse', function (e) {
+        var par = e.currentTarget.parentElement;
+        // 判斷是不是屬於這四個app
+        if (par.id === "profileAPP" || par.id === "collectAPP" || par.id === "cartAPP" || par.id === "orderAPP") {
+            let dom = par.firstElementChild.children[1].firstElementChild.firstElementChild.firstElementChild;
+            dom.className = "fa fa-angle-double-right";
+        }
+    });
+    function testNull(x) { // 判斷是不是空的函數
+        return x == null || x == undefined || x === "";
+    }
+
+    function openAPP() { // 獲取錨並且打開對應app;
+        let s = window.location.hash; // 獲取url的錨
+        if (!testNull(s)) {
+            $(s).children()[2].className = "collapse in"; // 將這個app的頁面變成打開
+        }
+    }
+    openAPP();
+    window.onhashchange = openAPP;// 監視錨的變化
+
+    var profileAPP = new Vue({
+        el: "#profileAPP",
+        data: {
+            Username: $("#Username").val(),
+            Passwd: $("#Passwd").val(),
+            Email: $("#Email").val(),
+            Birthday: $("#Birthday").val(),
+            QQNumber: $("#QQNumber").val(),
+            PhoneNumber: $("#PhoneNumber").val(),
+            Address: $("#Address").val(),
+            Level: $("#Level").val(),
+            RegisterTime: $("#RegisterTime").val(),
+            Captcha: null,
+            OldPasswd: null,// 使用者輸入的原先的密碼,用於確認使用者身份
+            NewPasswd: null, // 使用者輸入的將要更新的密碼
+            NewPasswdConfirm: null,
+        },
+        mounted: function () {//實例創建後執行的函數
+            $("#Username").attr("readonly", "true"); // 設置用戶名唯讀
+            $("#RegisterTime").attr("readonly", "true"); // 設置註冊時間不可更改
+            if (this.Level == 0) this.Level = "管理員";
+            else this.Level = "普通用戶";
+            $("#Level").attr("readonly", "true"); // 設置用戶許可權不可更改
+        },
+        methods: {
+            update: function () { // 更新使用者資訊
+                if (testNull(this.Username) || testNull(this.Passwd)) {
+                    toastr.error("表單錯誤!"); return;
+                }
+                if (testNull(this.Captcha)) {
+                    toastr.error("請填寫驗證碼!"); return;
+                }
+                if (testNull(this.OldPasswd) || this.Passwd !== $.md5(this.OldPasswd)) {
+                    toastr.error("舊密碼不匹配!"); return;
+                }
+                if (testNull(this.OldPasswd) || this.NewPasswd !== this.NewPasswdConfirm) {
+                    toastr.error("兩次輸入的新密碼不一致"); return;
+                }
+                if (testNull(this.Email)){
+                    toastr.error("請填寫郵箱!"); return;
+                }
+                let post_data = 'Username=@Session["username"]'; // 構建post的數據
+                post_data += "&Passwd=" + $.md5(this.NewPasswd);
+                post_data += "&Email=" + this.Email;
+                post_data += "&Birthday=" + this.Birthday;
+                post_data += "&PhoneNumber=" + this.PhoneNumber;
+                post_data += "&QQNumber=" + this.QQNumber;
+                post_data += "&Address=" + encodeURIComponent(this.Address);
+                post_data += "&Captcha=" + this.Captcha;
+                post_data += "&RegisterTime=" + this.RegisterTime;
+                post_data += "&Level=";
+                if (this.Level == "管理員") post_data += "0";
+                else post_data += "1";
+                axios({//發送post請求
+                    method: "POST",
+                    url: "/Users/Profiles",
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' //要用這個編碼才能轉化為model類的實例
+                    },
+                    data: post_data
+                }).then(function (response) {
+                    profileAPP.$data.Captcha = "";
+                    $('#captchaImg')[0].src = $('#captchaImg')[0].src + '?';//更新驗證碼
+                    let data = response.data;
+                    if (data.result == "success") {
+                        toastr.success("更新資訊成功!");
+                        profileAPP.$data.Passwd = $.md5(profileAPP.$data.NewPasswd);// 更新表單存儲的原先密碼
+                        profileAPP.$data.OldPasswd = "";
+                        profileAPP.$data.NewPasswd = "";
+                        profileAPP.$data.NewPasswdConfirm = "";
+                    }
+                    else {
+                        toastr.error(JSON.stringify(data.data), "更新失敗");
+                    }
+                });/*.catch(function (error) {
+                    toastr.error("未知錯誤" + JSON.stringify(error), "更新失敗");
+                });*/
+            },
+        }
+    });
+    var collectAPP = new Vue({
+        el: "#collectAPP",
+        data: {
+            collects: null,
+        },
+        mounted: function () { // 實例掛載後執行的函數
+            axios({
+                method: "get",
+                url: "/Users/Collect"
+            }).then(function (response) {
+                if (response.status !== 200) {
+                    toastr.error("獲取收藏列表失敗!");
+                    return;
+                }
+                for (let c of response.data) {
+                    c.Href = "/Item/Detail?item_id=" + c.ItemId;
+                    var s = c.CollectTime;
+                    c.CollectTime = new Date(s.substring(s.indexOf('(') + 1, s.indexOf(')')) / 1);
+                }
+                collectAPP.collects = response.data;// 將獲取的收藏列表傳給vue 的app
+            });
+        },
+        methods: {
+            delCollect: function (e) {
+                if (confirm("確認取消收藏?") === true) {
+                    const item_id = e.currentTarget.name
+                    axios({
+                        method: "get",
+                        url: "/Users/Collect",
+                        params: {
+                            item_id: item_id,
+                            op: "del"
+                        }
+                    }).then(function (response) {
+                        if (response.data == true) {
+                            toastr.success("取消收藏成功!", "success");
+                            // 清單中刪除這個元素
+                            collectAPP.collects = collectAPP.collects.filter(function (collect) { return collect.ItemId != item_id });
+                        }
+                        else {
+                            toastr.error("取消失敗", "fail");
+                        }
+                    });
+                }
+            }
+        }
+    });
+    var cartAPP = new Vue({
+        el: "#cartAPP",
+        data: {
+            carts: null,
+        },
+        mounted: function () { // 實例掛載後執行的函數
+            axios({
+                method: "get",
+                url: "/Users/Cart",
+                params: {
+                    op: "list"
+                }
+            }).then(function (response) {
+                if (response.status !== 200 || typeof (response.data) == 'string') {
+                    toastr.error(JSON.stringify(response.data), "獲取購物車列表失敗!");
+                    return;
+                }
+                for (let c of response.data) {
+                    c.Href = "/Item/Detail?item_id=" + c.ItemId;
+                    var s = c.CartInTime;
+                    c.CartInTime = new Date(s.substring(s.indexOf('(') + 1, s.indexOf(')')) / 1);
+                }
+                cartAPP.carts = response.data;// 將獲取的購物車列表傳給vue 的app
+            });
+        },
+        methods: {
+            delCart: function (e) {
+                if (confirm("確認刪除?") === true) {
+                    const item_id = e.currentTarget.name
+                    axios({
+                        method: "get",
+                        url: "/Users/Cart",
+                        params: {
+                            item_id: item_id,
+                            op: "del"
+                        }
+                    }).then(function (response) {
+                        if (response.data == true) {
+                            toastr.success("刪除成功!", "success");
+                            // 清單中刪除這個元素
+                            cartAPP.carts = cartAPP.carts.filter(function (cart) { return cart.ItemId != item_id });
+                        }
+                        else {
+                            toastr.error("刪除失敗" + JSON.stringify(response.data), "fail");
+                        }
+                    });
+                }
+            },
+            setCart: function (e) {
+                $("#cartNumberModal").modal('show');
+                $("#cartNumberModalButton").on('click', function (e1) { // 設置裡面的提交函數
+                    let num = 0;
+                    try {
+                        num = Number($("#cartNumberModalInput").val());
+                    } catch (error) {
+                        toastr.error("輸入資料不合法!", "Error");
+                        return;
+                    }
+                    if (num < 1) {
+                        toastr.error("輸入資料不合法!", "Error");
+                        return;
+                    }
+                    // 發送請求
+                    const item_id = e.target.name;
+                    axios({
+                        method: "get",
+                        url: "/Users/Cart",
+                        params: {
+                            item_id: item_id,
+                            op: "set",
+                            num: num
+                        }
+                    }).then(function (response) {
+                        console.log(response.data);
+                        if (response.data == true) {
+                            toastr.success("修改成功!", "success");
+                            $("#cartNumberModal").modal('hide');
+                            for (let c of cartAPP.carts) {
+                                if (c.ItemId == item_id) c.CartItemNumber = num;
+                            }
+                        }
+                        else {
+                            toastr.error("修改失敗" + JSON.stringify(response.data), "Fail");
+                        }
+                    });
+                });
+            }
+        }
+    });
+    var orderAPP = new Vue({
+        el: "#orderAPP",
+        data: {
+            orders: []
+        },
+        mounted: function () {
+            axios({
+                method: "get",
+                url: "/Users/Orders",
+                params: {
+                    op: "list"
+                }
+            }).then(function (response) {
+                if (typeof (response.data) == 'string') {
+                    toastr.error("獲取訂單清單失敗! "+response.data, "Error");
+                }
+                for (var x of response.data) {
+                    let s = x.OrderCreateTime;
+                    // 更新時間表示
+                    x.OrderCreateTime = new Date(s.substring(s.indexOf('(') + 1, s.indexOf(')')) / 1);
+                }
+                orderAPP.orders = response.data;
+            });
+        },
+        methods: {
+            pay: function (e) {
+                const orderId = e.target.name;
+                $("#payModal").modal();
+                $("#payModalButton").on('click', function (ee) {
+                    axios({
+                        method: "get",
+                        url: "/Users/Orders",
+                        params: {
+                            op: "pay",
+                            order_id: orderId
+                        }
+                    }).then(function (response) {
+                        if (response.data == true) {
+                            toastr.success("購買成功!", "success");
+                            $("#payModal").modal('hide');//關閉模態框
+                            for (let o of orderAPP.orders) {
+                                if (o.OrderId == orderId) o.OrderStatus = "已支付";
+                            }
+                        }
+                        else {
+                            toastr.error("購買失敗! " + JSON.stringify(response.data), "error");
+                        }
+                    });
+                });
+            }
+        }
+    });
+    function buy(dom) {
+        const item_id = dom.name;
+        axios({
+            method: "get",
+            url: "/Users/Orders",
+            params: {
+                op: "add",
+                item_id: item_id
+            }
+        }).then(function (response) {
+            if (typeof (response.data) !== "object") {
+                toastr.error(JSON.stringify(response.data), "新建訂單失敗");
+                return;
+            }
+            // 將新增的訂單添加到訂單表格裡
+            let s = response.data.OrderCreateTime;
+            // 更新時間表示
+            response.data.OrderCreateTime = new Date(s.substring(s.indexOf('(') + 1, s.indexOf(')')) / 1);
+            orderAPP.orders.push(response.data);
+
+            // 將購物車裡面對應的刪除
+            cartAPP.carts = cartAPP.carts.filter(function (cart) { return cart.ItemId != item_id });
+            toastr.success("新建訂單成功!", "success");
+        });
+    }
+</script>
+@Scripts.Render("~/Bundles/encrypt")<!-- 引入md5 函數-->

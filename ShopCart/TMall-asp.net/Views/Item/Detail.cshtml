@@ -1,0 +1,281 @@
+﻿@model TMall.Models.ItemModel
+@{
+    ViewBag.Title = Model.ItemName + " -- 商品詳情";
+}
+
+<div class="row">
+    <div class="col-md-5"><img src="@Model.ItemPicture" class="img-responsive line" alt="Picture" /></div>
+    <div class="col-md-6" style="background-color: white">
+        <h2>@Model.ItemName</h2>
+        <h3 style="color: red">¥ @Model.ItemPrice</h3>
+        <ul class="list-group">
+            <li class="list-group-item list-group-item-danger">庫存: @Model.ItemNumber</li>
+            <li class="list-group-item list-group-item-success">銷量: @Model.ItemSales</li>
+            <li class="list-group-item list-group-item-info">所屬類別: @TMall.Respository.Item.GetItemCategoryName(Model.ItemCategoryId)</li>
+            <li class="list-group-item list-group-item-warning">最後更新時間: @Model.LastUpdateTime</li>
+            <li class="list-group-item list-group-item-text">關鍵字: @Model.ItemKeyword</li>
+        </ul>
+        <p style="padding: 20px">
+            <button class="btn btn-primary" onclick="$('#myModal').modal();">加入購物車</button>
+            <button class="btn btn-primary" onclick="changeCollect(this)">
+                @if (TMall.Respository.Users.JudgeCollect((string)Session["username"], Model.ItemId))
+                {
+                    <span><i class="fa fa-heart" aria-hidden="true"></i>取消收藏</span>
+                }
+                else
+                {
+                    <span><i class="fa fa-heart-o" aria-hidden="true"></i>收藏</span>
+                }
+            </button>
+            @if (TMall.Respository.Users.isAdmin((string)Session["username"]))
+            {
+                <button class="btn btn-danger" onclick="javascrtpt: window.location.href = '/Item/Edit?item_id=@Model.ItemId';">編輯</button>
+                <button class="btn btn-danger" onclick="deleteItem(@Model.ItemId)">刪除</button>
+            }
+        </p>
+    </div>
+    <div class="col-md-12" style="margin: 20px 0;">
+        <h2>商品詳情</h2><hr />
+        <div style="background-color: white;">
+            <!-- markdown 渲染 -->
+            @{
+                MarkdownSharp.Markdown m = new MarkdownSharp.Markdown();
+                var result = new MvcHtmlString(m.Transform(Model.ItemText));
+                @result
+            }
+        </div>
+    </div>
+
+    <div class="col-md-12" id="commentAPP">
+        <!-- comments area-->
+        <div class="form-group">
+            <h2>商品評論</h2><hr />
+            <!-- 首先第一個div 是商品的評論框, 用於添加新的評論 -->
+            <textarea v-model="commentText" class="form-control" placeholder="我也評論一下!" rows="8" id="commentInsertText"></textarea>
+            <div class="form-inline" style="margin-top: 7px">
+                <label for="commentInsertScore">商品打分: </label>
+                <input v-model="commentScore" class="form-control" type="number" max="5" min="1" id="commentInsertScore" />
+                <button class="btn btn-success pull-right" id="commentInsertSubmit" v-on:click="submitComment">發表評論</button>
+            </div>
+        </div>
+        <div style="padding-top: 6px;padding-bottom: 13px">
+            <!-- 然後第二個div是 商品的評論清單, 用於顯示已經存在的評論 -->
+            <h2>評論列表</h2><hr />
+            <div v-if="comments!==null && comments.length!==0">
+                <!-- 如果存在評論就顯示評論清單-->
+                <p>
+                    <ul class="list-inline" style="font-size: larger;margin-left: 3px">
+                        <li class="list-group-item">1分: {{scoreNums[1]/comments.length*100}}%</li>
+                        <li class="list-group-item">2分: {{scoreNums[2]/comments.length*100}}%</li>
+                        <li class="list-group-item">3分: {{scoreNums[3]/comments.length*100}}%</li>
+                        <li class="list-group-item">4分: {{scoreNums[4]/comments.length*100}}%</li>
+                        <li class="list-group-item">5分: {{scoreNums[5]/comments.length*100}}%</li>
+                        <li class="list-group-item">平均分值: {{(1*scoreNums[1]+2*scoreNums[2]+3*scoreNums[3]+4*scoreNums[4]+5*scoreNums[5])/comments.length}}</li>
+                    </ul>
+                </p>
+                <div style="margin-top:10px;background-color: white; padding: 10px" v-for="comment in comments">
+                    <!-- 評論列表 -->
+                    <h4>
+                        <span style="margin-right: 5px">評論者: {{comment.Username}}</span>
+                        <i v-for="star in comment.stars" style="color: gold" v-bind:class="star" aria-hidden="true"></i><!-- 評論的星星 -->
+                        <span class="small pull-right">time: {{comment.ItemCommentTime}}</span>
+                    </h4>
+                    <hr style="border-color: aqua;margin-top:0" />
+                    <div v-html="comment.ItemCommentText">
+                        <!-- v-html" 將會使這個變數顯示原始html-->
+                    </div>
+                </div>
+            </div>
+            <div v-else style="background-color: white; padding: 20px">
+                <h3>暫無評論</h3>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<!-- 模態對話方塊 -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="myModalLabel">請輸入增加進購物車的數量</h4>
+            </div>
+            <div class="modal-body">
+                <input type="number" min="1" max="100000" id="myModalInput" class="form-control" />
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-default" data-dismiss="modal">關閉</button>
+                <button type="button" class="btn btn-primary" onclick="addCart()">提交更改</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Comment App 對應的vue實例
+    var commentAPP = new Vue({
+        el: "#commentAPP",
+        data: {
+            comments: [],
+            scoreNums: [0,0,0,0,0,0],
+            commentText: null,//這兩個是表單上的數據綁定
+            commentScore: null
+        },
+        mounted: function () {// 實例掛載後調用的函數,利用它來初始化評論列表
+            axios.get("/Item/Comment?item_id=@Model.ItemId")
+            .then(function (response) {
+                commentAPP.comments = response.data;// 返回的評論列表
+                for (let comment of commentAPP.comments) {// 預處理一下
+                    comment.ItemCommentText = marked(comment.ItemCommentText);//markdown 渲染一下
+                    commentAPP.scoreNums[comment.ItemCommentScore] += 1;
+                    comment.stars = [];
+                    for (let i = 1; i < 6; ++i) {
+                        if (i <= comment.ItemCommentScore) comment.stars.push("fa fa-star");
+                        else comment.stars.push("fa fa-star-o");
+                    }
+                    let str = comment.ItemCommentTime;
+                    comment.ItemCommentTime = new Date(str.substring(str.indexOf('(') + 1, str.indexOf(')')) / 1);
+                }
+            }).catch(function (error) {
+                toastr.error(JSON.stringify(error),"獲取評論失敗");
+            });
+        },
+        methods: {
+            submitComment: function () { // 提交評論事件
+                if (commentAPP.commentText === null) {
+                    toastr.warning("評論不能為空!");
+                    return;
+                }
+                if (commentAPP.commentScore === null) {
+                    toastr.warning("分數不能為空!");
+                    return;
+                }
+                $("#commentInsertSubmit").attr({ "disabled": "disabled" });// 禁用按鈕, 防止重複發送
+                let post_data = "ItemId=@Model.ItemId&ItemCommentTime="; // 要注意變數名相同, 才能轉化為model類的實例
+                const date = new Date();
+                post_data += date.getFullYear() + "-" + (date.getMonth()+1) + "-" + date.getDate() + "%20" + date.getHours() + ":" + date.getMinutes() + ":" + date.getSeconds();
+                post_data += "&ItemCommentScore=" + commentAPP.commentScore;
+                post_data += "&ItemCommentText=" + encodeURIComponent(commentAPP.commentText);
+                axios({ // 發送post請求
+                    method: "POST",
+                    url: "/Item/Comment",
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' //要用這個編碼才能轉化為model類的實例
+                    },
+                    data: post_data
+                }).then(function (response) {
+                    if (response.data === "success") {//增加成功!
+                        let comment = {Username: "@Session["username"]" }; // 生成新的評論載入到dom中
+                        comment.ItemCommentText = marked(commentAPP.commentText);//markdown 渲染
+                        comment.ItemCommentScore = commentAPP.commentScore;
+                        comment.ItemCommentTime = new Date();
+                        ++commentAPP.scoreNums[Number(commentAPP.commentScore)  ];
+                        comment.stars = [];
+                        for (let i = 1; i < 6; ++i) {
+                            if (i <= comment.ItemCommentScore) comment.stars.push("fa fa-star");
+                            else comment.stars.push("fa fa-star-o");
+                        }
+                        commentAPP.comments.push(comment);
+                        commentAPP.commentText = "";// 清空輸入框
+                        toastr.success("增加評論成功");
+                    }
+                    else {
+                        toastr.error(JSON.stringify(response), "評論增加失敗");
+                    }
+                    $("#commentInsertSubmit").removeAttr("disabled");//恢復按鈕
+                }).catch(function (error) { // 如果出錯就把錯誤顯示出來
+                    toastr.error(JSON.stringify(error), "Error");
+                    $("#commentInsertSubmit").removeAttr("disabled");
+                });
+            }
+        }
+    });
+</script>
+<script>
+    function deleteItem (item_id){
+        if (item_id === null || item_id === undefined) return;
+        if (confirm("您確認要刪除嗎?") !== true) return;
+        $.ajax({ //mvc後臺能判斷出ajax非同步請求
+            url: "/Item/Delete?item_id=" + item_id,
+            type: "GET",
+            success: function (data) {
+                if (data === "404 Not Found!") {
+                    toastr.error("無法找到您想要刪除的商品", "404");
+                } else if (data === "Delete success!") {
+                    toastr.success("刪除成功, 頁面馬上跳轉", "success");
+                    setTimeout(function () {
+                        window.location.href = "/";
+                    }, 1000);
+                }
+                else {
+                    toastr.error("刪除失敗,未知錯誤!", "fail");
+                }
+            },
+            error: function (data) {
+                if (data.status === 401) {
+                    toastr.error("您不是管理員帳戶, 沒有許可權刪除", "未授權");
+                }
+                else {
+                    toastr.error("刪除失敗,未知錯誤!", "fail");
+                }
+            }
+        });
+    }
+
+    function changeCollect(dom) {
+        var oper;
+        var newHTML;
+        var msg;
+        if (dom.innerHTML.indexOf("取消") === -1) { // 沒有取消兩個字,就是還沒有收藏
+            oper = "add";
+            newHTML = '<span><i class="fa fa-heart" aria-hidden="true"></i>取消收藏</span>'
+            msg = "收藏";
+        }
+        else {
+            oper = "del";
+            newHTML = '<span><i class="fa fa-heart-o" aria-hidden="true"></i>收藏</span>'
+            msg = "取消收藏";
+        }
+        axios({
+            method: "get",
+            url: "/Users/Collect",
+            params: {
+                item_id: @Model.ItemId,
+                op: oper
+            }
+        }).then(function (response) {
+            if (response.data == true) {
+                toastr.success(msg + "成功!", "success");
+                dom.innerHTML = newHTML;
+            }
+            else {
+                toastr.error(msg + "失敗", "fail");
+            }
+        });
+    }
+    function addCart() {
+        let num = Number($("#myModalInput").val());
+        if (typeof (num) != 'number' || num < 1) {
+            toastr.warning("數量不合法!");
+            return;
+        }
+        axios({ // 發送請求.
+            method: "get",
+            url: "/Users/Cart",
+            params: {
+                op: "add",
+                item_id: @Model.ItemId,
+                num: num
+            }
+        }).then(function (response) {
+            if (response.data === true) {
+                toastr.success("增加成功!");
+                $("#myModal").modal('hide');
+            }
+            else {
+                toastr.error(JSON.stringify(response.data), "增加失敗!");
+            }
+        });
+    }
+</script>
